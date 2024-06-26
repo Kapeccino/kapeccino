@@ -24,7 +24,9 @@ async function handleCommand(api, event, args, message) {
 async function getAnswerFromAI(question) {
     try {
         const services = [
-            { url: 'https://markdevs-last-api.onrender.com/gpt4', params: { prompt: question, uid: 'your-uid-here' } }
+            { url: 'https://markdevs-last-api.onrender.com/gpt4', params: { prompt: question, uid: 'your-uid-here' } },
+            { url: 'http://markdevs-last-api.onrender.com/api/v2/gpt4', params: { query: question } },
+            { url: 'https://markdevs-last-api.onrender.com/api/v3/gpt4', params: { ask: question } }
         ];
 
         for (const service of services) {
