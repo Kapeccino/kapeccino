@@ -1,20 +1,19 @@
 const axios = require('axios');
 
+let lastResponseMessageID = null;
+
 async function handleCommand(api, event, args, message) {
     try {
         const question = args.join(" ").trim();
 
         if (!question) {
-            return message.reply("Failed to get an answer. Please try again later.");
+            return message.reply("Please provide a question to get an answer.");
         }
 
-        const response = await getAnswerFromAI(question);
+        const { response, messageID } = await getAIResponse(question, event.senderID, event.messageID);
+        lastResponseMessageID = messageID;
 
-        if (response) {
-            message.reply(response);
-        } else {
-            message.reply("Failed to get an answer. Please try again later.");
-        }
+        api.sendMessage(`🧋✨ | 𝙼𝚘𝚌𝚑𝚊 𝙰𝚒\n━━━━━━━━━━━━━━━━\n${response}\n━━━━━━━━━━━━━━━━`, event.threadID, messageID);
     } catch (error) {
         console.error("Error in handleCommand:", error.message);
         message.reply("An error occurred while processing your request.");
@@ -80,22 +79,26 @@ module.exports = {
         const input = args.join(' ').trim();
         try {
             const { response, messageID } = await getAIResponse(input, event.senderID, event.messageID);
+            lastResponseMessageID = messageID;
             api.sendMessage(`🧋✨ | 𝙼𝚘𝚌𝚑𝚊 𝙰𝚒\n━━━━━━━━━━━━━━━━\n${response}\n━━━━━━━━━━━━━━━━`, event.threadID, messageID);
         } catch (error) {
             console.error("Error in onStart:", error.message);
             api.sendMessage("An error occurred while processing your request.", event.threadID);
         }
     },
-    onChat: async function ({ event, message }) {
+    onChat: async function ({ event, message, api }) {
         const messageContent = event.body.trim().toLowerCase();
-        if (messageContent.startsWith("ai")) {
-            const input = messageContent.replace(/^gpt\s*/, "").trim();
+
+        // Check if the message is a reply to the bot's message or starts with "ai"
+        if ((event.messageReply && event.messageReply.senderID === api.getCurrentUserID()) || (messageContent.startsWith("ai") && event.senderID !== api.getCurrentUserID())) {
+            const input = messageContent.replace(/^ai\s*/, "").trim();
             try {
-                const { response, messageID } = await getAIResponse(input, event.senderID, message.messageID);
-                message.reply(`🧋✨ | 𝙼𝚘𝚌𝚑𝚊 𝙰𝚒\n━━━━━━━━━━━━━━━━\n${response}\n━━━━━━━━━━━━━━━━`, messageID);
+                const { response, messageID } = await getAIResponse(input, event.senderID, event.messageID);
+                lastResponseMessageID = messageID;
+                api.sendMessage(`🧋✨ | 𝙼𝚘𝚌𝚑𝚊 𝙰𝚒\n━━━━━━━━━━━━━━━━\n${response}\n━━━━━━━━━━━━━━━━`, event.threadID, messageID);
             } catch (error) {
                 console.error("Error in onChat:", error.message);
-                message.reply("An error occurred while processing your request.");
+                api.sendMessage("An error occurred while processing your request.", event.threadID);
             }
         }
     },
