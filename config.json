@@ -18,9 +18,7 @@
     "enable": false,
     "ignoreCommand": []
   },
-  "adminBot": [
-    "add your uid here"
-  ],
+  "adminBot": [],
   "whiteListMode": {
     "enable": false,
     "whiteListIds": [],

@@ -3,6 +3,11 @@ const axios = require("axios");
 module.exports = {
   config: {
     name: "lyrics",
+    version: "1.0",
+    author: "coffee",
+    countDown: 5,
+    role: 0,
+    category: "music",
   },
 
   onStart: async function ({ api, event, args }) {
@@ -12,40 +17,70 @@ module.exports = {
       return;
     }
 
-    const firstApiUrl = `https://lyrist.vercel.app/api/${encodeURIComponent(songName)}`;
     try {
-      const response = await axios.get(firstApiUrl);
-      const { lyrics, title, artist } = response.data;
-
-      if (!lyrics) {
-        // Fallback to the second API if lyrics are not found in the first API
-        return fetchFromBackupAPI(api, event, songName);
-      } else {
-        const formattedLyrics = `🎧 | Title: ${title}\n🎤 | Artist: ${artist}\n\n${lyrics}`;
-        api.sendMessage(formattedLyrics, event.threadID, event.messageID);
-      }
+      await fetchLyrics(api, event, songName, 0);
     } catch (error) {
-      console.error(`Error fetching lyrics from the first API for "${songName}":`, error);
-      // Fallback to the second API on error
-      fetchFromBackupAPI(api, event, songName);
+      console.error(`Error fetching lyrics for "${songName}":`, error);
+      api.sendMessage(`Sorry, there was an error getting the lyrics for "${songName}"!`, event.threadID, event.messageID);
     }
   },
 };
 
-async function fetchFromBackupAPI(api, event, songName) {
-  const backupApiUrl = `https://samirxpikachu.onrender.com/lyrics?query=${encodeURIComponent(songName)}`;
+const apiConfigs = [
+  {
+    name: "Primary API",
+    url: (songName) => `https://lyrist.vercel.app/api/${encodeURIComponent(songName)}`,
+  },
+  {
+    name: "Backup API 1",
+    url: (songName) => `https://samirxpikachu.onrender.com/lyrics?query=${encodeURIComponent(songName)}`,
+  },
+  {
+    name: "Backup API 2",
+    url: (songName) => `https://markdevs-last-api.onrender.com/search/lyrics?q=${encodeURIComponent(songName)}`,
+  },
+  {
+    name: "Backup API 3",
+    url: (artist, song) => `https://openapi-idk8.onrender.com/lyrical/find?artist=${encodeURIComponent(artist)}&song=${encodeURIComponent(song)}`,
+    requiresArtistAndSong: true,
+  },
+];
+
+async function fetchLyrics(api, event, songName, attempt) {
+  if (attempt >= apiConfigs.length) {
+    api.sendMessage(`Sorry, lyrics for "${songName}" not found in all APIs!`, event.threadID, event.messageID);
+    return;
+  }
+
+  const { name, url, requiresArtistAndSong } = apiConfigs[attempt];
+  let apiUrl;
+
   try {
-    const response = await axios.get(backupApiUrl);
+    if (requiresArtistAndSong) {
+      const [artist, title] = songName.split('-').map(s => s.trim());
+      if (!artist || !title) {
+        throw new Error("Invalid format for artist and song title");
+      }
+      apiUrl = url(artist, title);
+    } else {
+      apiUrl = url(songName);
+    }
+
+    const response = await axios.get(apiUrl);
     const { lyrics, title, artist } = response.data;
 
     if (!lyrics) {
-      api.sendMessage(`Sorry, lyrics for "${songName}" not found in both APIs!`, event.threadID, event.messageID);
-    } else {
-      const formattedLyrics = `🎧 | Title: ${title}\n🎤 | Artist: ${artist}\n\n${lyrics}`;
-      api.sendMessage(formattedLyrics, event.threadID, event.messageID);
+      throw new Error("Lyrics not found");
     }
+
+    sendFormattedLyrics(api, event, title, artist, lyrics);
   } catch (error) {
-    console.error(`Error fetching lyrics from the backup API for "${songName}":`, error);
-    api.sendMessage(`Sorry, there was an error getting the lyrics for "${songName}"!`, event.threadID, event.messageID);
+    console.error(`Error fetching lyrics from ${name} for "${songName}":`, error.message || error);
+    await fetchLyrics(api, event, songName, attempt + 1);
   }
+}
+
+function sendFormattedLyrics(api, event, title, artist, lyrics) {
+  const formattedLyrics = `🎧 | Title: ${title}\n🎤 | Artist: ${artist}\n\n${lyrics}`;
+  api.sendMessage(formattedLyrics, event.threadID, event.messageID);
 }
