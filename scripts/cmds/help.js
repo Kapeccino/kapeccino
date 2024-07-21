@@ -4,6 +4,11 @@ const commandInfoMap = {
     description: "Ai Based on GPT-4",
     guide: "-ai what is life?"
     },
+  spotify: {
+    name: "spotify",
+    description: "play song from spotify",
+    guide: "-spotify <song title> <artist>\nexample:\n-spotify perfect by ed sheeran"
+    },
   tempmail: {
     name: "tempmail",
     description: "Get Temporary Emails and it's Inbox messages",
