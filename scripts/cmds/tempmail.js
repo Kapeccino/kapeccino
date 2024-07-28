@@ -1,10 +1,13 @@
 const axios = require("axios");
 
+const EMAIL_API_URL = "https://www.samirxpikachu.run.place/tempmail/get";
+const INBOX_API_URL = "https://www.samirxpikachu.run.place/tempmail/inbox/";
+
 module.exports = {
   config: {
     name: "tempmail",
     version: "1.0",
-    author: "ARN",
+    author: "coffee",
     countDown: 5,
     role: 0,
     category: "tool",
@@ -21,52 +24,54 @@ module.exports = {
       if (command === "create") {
         let email;
         try {
-          const response = await axios.get("https://for-devs.onrender.com/api/mail/gen?apikey=api1");
+          // Generate a random temporary email
+          const response = await axios.get(EMAIL_API_URL);
           email = response.data.email;
-        } catch (error) {
-          console.error("❌ | Primary API failed for email generation", error);
-          try {
-            const response = await axios.get("https://markdevs-last-api.onrender.com/api/gen");
-            email = response.data.email;
-          } catch (error) {
-            console.error("❌ | Secondary API failed for email generation", error);
-            return api.sendMessage("❌ | Failed to generate email. Please try again later.", event.threadID, event.messageID);
+
+          if (!email) {
+            throw new Error("Failed to generate email");
           }
+        } catch (error) {
+          console.error("❌ | Failed to generate email", error.message);
+          return api.sendMessage(`❌ | Failed to generate email. Error: ${error.message}`, event.threadID, event.messageID);
         }
         return api.sendMessage(`📩 Generated email: ${email}`, event.threadID, event.messageID);
       } else if (command === "inbox" && args.length === 2) {
         const email = args[1];
         if (!email) {
-          return api.sendMessage("❌ | Provide an email address for the inbox.", event.threadID, event.messageID);
+          return api.sendMessage("❌ | Please provide an email address to check the inbox.", event.threadID, event.messageID);
         }
 
         let inboxMessages;
         try {
-          const inboxResponse = await axios.get(`https://for-devs.onrender.com/api/mail/inbox?email=${email}&apikey=api1`);
+          // Retrieve messages from the specified email
+          const inboxResponse = await axios.get(`${INBOX_API_URL}${email}`);
           inboxMessages = inboxResponse.data;
-        } catch (error) {
-          console.error("❌ | Primary API failed for fetching inbox messages", error);
-          try {
-            const inboxResponse = await axios.get(`http://markdevs-last-api.onrender.com/api/getmessage/${email}`);
-            inboxMessages = inboxResponse.data;
-          } catch (error) {
-            console.error("❌ | Secondary API failed for fetching inbox messages", error);
-            return api.sendMessage("❌ | Failed to retrieve inbox messages. Please try again later.", event.threadID, event.messageID);
+
+          if (!Array.isArray(inboxMessages)) {
+            throw new Error("Unexpected response format");
           }
+        } catch (error) {
+          console.error(`❌ | Failed to retrieve inbox messages`, error.message);
+          return api.sendMessage(`❌ | Failed to retrieve inbox messages. Error: ${error.message}`, event.threadID, event.messageID);
         }
 
         if (inboxMessages.length === 0) {
           return api.sendMessage("❌ | No messages found in the inbox.", event.threadID, event.messageID);
         }
 
-        const formattedMessages = inboxMessages.map(({ date, sender, message }) => `📅 Date: ${date}\n📧 From: ${sender}\n📩 Message: ${message}`).join('\n\n');
-        return api.sendMessage(`📬 Inbox messages for ${email}:\n\n${formattedMessages}\n\nOld messages will be deleted after some time.`, event.threadID, event.messageID);
+        // Get the most recent message
+        const latestMessage = inboxMessages[0];
+        const { date, from, subject } = latestMessage;
+
+        const formattedMessage = `📧 From: ${from}\n📩 Subject: ${subject}\n📅 Date: ${date}\n━━━━━━━━━━━━━━━━`;
+        return api.sendMessage(`━━━━━━━━━━━━━━━━\n📬 Inbox messages for ${email}:\n${formattedMessage}`, event.threadID, event.messageID);
       } else {
         return api.sendMessage(`❌ | Invalid command. Use '-tempmail create' to generate a temporary email or '-tempmail inbox (email)' to retrieve inbox messages.`, event.threadID, event.messageID);
       }
     } catch (error) {
-      console.error(error);
-      return api.sendMessage("❌ | An error occurred. Please try again later.", event.threadID, event.messageID);
+      console.error("Unexpected error:", error.message);
+      return api.sendMessage(`❌ | An unexpected error occurred: ${error.message}`, event.threadID, event.messageID);
     }
   }
 };
