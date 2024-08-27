@@ -19,6 +19,11 @@ const commandInfoMap = {
     description: "download video content using link from Facebook, Instagram, Tiktok, Youtube, Twitter, and Spotify audio",
     guide: "-alldl [link]"
   },
+removebg: {
+		name: "removebg",
+		description: "remove background of an image",
+		guide: "reply to an image and type\n-removebg or -rbg"
+		},
   translate: {
     name: "translate",
     description: "Translate to any languages",
@@ -97,6 +102,7 @@ module.exports = {
 │ - Pinterest
 │ - Prefix
 │ - Remini
+│ - Removebg
 │ - Tempmail
 │ - Translate
 │ - Unsend
