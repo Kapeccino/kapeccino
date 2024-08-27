@@ -20,9 +20,9 @@ const commandInfoMap = {
     guide: "-alldl [link]"
   },
 removebg: {
-		name: "removebg",
-		description: "remove background of an image",
-		guide: "reply to an image and type\n-removebg or -rbg"
+		  name: "removebg",
+  		description: "remove background of an image",
+  		guide: "reply to an image and type\n-removebg or -rbg"
 		},
   translate: {
     name: "translate",
