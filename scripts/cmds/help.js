@@ -19,11 +19,6 @@ const commandInfoMap = {
     description: "download video content using link from Facebook, Instagram, Tiktok, Youtube, Twitter, and Spotify audio",
     guide: "-alldl [link]"
   },
-animagine: {
-    name: "animagine",
-    description: "makes an animated image based on your imagination",
-    guide: "-animagine cat with wings"
-    },
   translate: {
     name: "translate",
     description: "Translate to any languages",
@@ -96,7 +91,6 @@ module.exports = {
 ╭─╼━━━━━━━━╾─╮
 │ - AI
 │ - Translate
-│ - Animagine
 │ - Dalle
 │ - Pinterest
 │ - Remini
