@@ -90,15 +90,15 @@ module.exports = {
 𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
 ╭─╼━━━━━━━━╾─╮
 │ - AI
-│ - Translate
-│ - Dalle
-│ - Pinterest
-│ - Remini
-│ - Lyrics
 │ - Alldl
+│ - Dalle
 │ - Help
+│ - Lyrics
+│ - Pinterest
 │ - Prefix
+│ - Remini
 │ - Tempmail
+│ - Translate
 │ - Unsend
 │ - Uptime
 ╰─━━━━━━━━━╾─╯
