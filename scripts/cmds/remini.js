@@ -1,75 +1,62 @@
-const axios = require('axios');
-const fs = require('fs-extra');
+const { writeFileSync, existsSync, mkdirSync } = require("fs");
+const { join } = require("path");
+const axios = require("axios");
 const tinyurl = require('tinyurl');
-const path = require('path');
+const fs = require('fs'); 
 
 module.exports = {
   config: {
     name: "remini",
-    aliases: ["remini"],
-    author: "Hazeyy/kira/JARiF",
-    version: "69",
-    cooldowns: 5,
-    role: 0,
-    shortDescription: {
-      en: "enhance image"
-    },
-    longDescription: {
-      en: "remini filter"
-    },
-    category: "image",
+    aliases: [],
+    version: "2.0",
+    author: "Vex_Kshitiz",
+    countDown: 20,
+    role: 2,
+    shortDescription: "remini",
+    longDescription: "enhance the image quality",
+    category: "tool",
     guide: {
-      en: "{p}{n} [reply to an img or provide an image URL]"
+      en: "{p}remini (reply to image)",
     }
   },
 
-  onStart: async function ({ api, event }) {
-    const args = event.body.split(/\s+/).slice(1); // Use slice to skip the first element
-    const { threadID, messageID, messageReply } = event;
-    const tempImagePath = path.join(__dirname, 'tmp', 'enhanced_image.jpg');
+  onStart: async function ({ message, event, api }) {
+    api.setMessageReaction("🕰️", event.messageID, (err) => {}, true);
+    const { type: a, messageReply: b } = event;
+    const { attachments: c, threadID: d, messageID: e } = b || {};
 
-    // Check if there's a message reply and if it has attachments
-    if (!messageReply || !messageReply.attachments || !(messageReply.attachments[0] || args[0])) {
-      api.sendMessage("┐⁠(⁠￣⁠ヘ⁠￣⁠)⁠┌ | Must reply to an image or provide an image URL.", threadID, messageID);
-      return;
-    }
+    if (a === "message_reply" && c) {
+      const [f] = c;
+      const { url: g, type: h } = f || {};
 
-    // Determine the photo URL from the reply or command arguments
-    const photoUrl = messageReply.attachments[0] ? messageReply.attachments[0].url : args.join(" ");
-
-    // Check if a valid photo URL is present
-    if (!photoUrl) {
-      api.sendMessage("┐⁠(⁠￣⁠ヘ⁠￣⁠)⁠┌ | Must reply to an image or provide an image URL.", threadID, messageID);
-      return;
-    }
-
-    api.sendMessage("⊂⁠(⁠・⁠﹏⁠・⁠⊂⁠) | Please wait...", threadID, async () => {
-      try {
-        // Shorten the photo URL using TinyURL
-        const shortenedUrl = await tinyurl.shorten(photoUrl);
-
-        // Fetch the upscaled image using the upscale API
-        const response = await axios.get(`https://www.api.vyturex.com/upscale?imageUrl=${shortenedUrl}`);
-        const processedImageUrl = response.data.resultUrl;
-
-        // Fetch the processed image
-        const enhancedImageResponse = await axios.get(processedImageUrl, { responseType: "arraybuffer" });
-
-        // Save the processed image to a temporary file
-        fs.writeFileSync(tempImagePath, enhancedImageResponse.data);
-
-        // Send the enhanced image as a reply
-        api.sendMessage({
-          body: "<⁠(⁠￣⁠︶⁠￣⁠)⁠> | Image Enhanced.",
-          attachment: fs.createReadStream(tempImagePath)
-        }, threadID, () => {
-          // Delete the temporary image file after sending
-          fs.unlinkSync(tempImagePath);
-        }, messageID);
-      } catch (error) {
-        // Handle errors gracefully
-        api.sendMessage(`(⁠┌⁠・⁠。⁠・⁠)⁠┌ | Api Dead...: ${error.message}`, threadID, messageID);
+      if (!f || !["photo", "sticker"].includes(h)) {
+        return message.reply("❌ | Reply must be an image.");
       }
-    });
+
+      try {
+        const i = await tinyurl.shorten(g);
+        const { data: j } = await axios.get(`https://vex-kshitiz.vercel.app/upscale?url=${encodeURIComponent(i)}`, {
+          responseType: "json"
+        });
+
+        const imageUrl = j.result_url;
+        const imageResponse = await axios.get(imageUrl, { responseType: "arraybuffer" });
+
+        const k = join(__dirname, "cache");
+        if (!existsSync(k)) {
+          mkdirSync(k, { recursive: true });
+        }
+
+        const imagePath = join(k, "remi_image.png");
+        writeFileSync(imagePath, imageResponse.data);
+
+        message.reply({ attachment: fs.createReadStream(imagePath) }, d);
+      } catch (m) {
+        console.error(m);
+        message.reply("❌ | Error occurred while enhancing image.");
+      }
+    } else {
+      message.reply("❌ | Please reply to an image.");
+    }
   }
 };
