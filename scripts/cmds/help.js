@@ -96,7 +96,6 @@ module.exports = {
       const commandsList = `━━━━━━━━━━━━━━━━
 𝙰𝚟𝚊𝚒𝚕𝚊𝚋𝚕𝚎 𝙲𝚘𝚖𝚖𝚊𝚗𝚍𝚜:
 ╭─╼━━━━━━━━╾─╮
-│  📖 | AI & Tools
 │ %1 Ai
 │ %1 Alldl
 │ %1 Dalle
