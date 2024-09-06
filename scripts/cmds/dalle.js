@@ -18,17 +18,17 @@ module.exports = {
 
   onStart: async function ({ message, args }) {
     let prompt = args.join(" ");
-    
+
 
     try {
       const apiUrl = `https://samirxpikachuio.onrender.com/mageDef?prompt=${encodeURIComponent(prompt)}`;
-      
+
       const imageStream = await global.utils.getStreamFromURL(apiUrl);
 
       if (!imageStream) {
         return message.reply("Failed to retrieve image.");
       }
-      
+
       return message.reply({
         body: "♪⁠(⁠┌⁠・⁠。⁠・⁠)⁠┌ | Here's your Image",
         attachment: imageStream
